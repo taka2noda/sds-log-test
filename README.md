@@ -52,6 +52,24 @@ Options:
 python3 validate_logs.py --since now-10m   # look back further if needed
 ```
 
+### (Optional) Clear keyword match conditions
+
+Standard Datadog SDS rules include keyword proximity filters by default — a rule only fires when a specified keyword (e.g., `card`, `pan`, `ssn`) appears within N characters of the pattern match. This reduces false positives but may miss matches in logs where the field name differs.
+
+To remove all keyword match conditions from every rule in a group:
+
+```bash
+# Preview changes first (no changes applied)
+python3 clear_rule_keywords.py --group-name "my-group" --dry-run
+
+# Apply
+python3 clear_rule_keywords.py --group-name "my-group"
+```
+
+After clearing, rules will fire on any pattern match regardless of surrounding context. Re-run `send_logs.py` and `validate_logs.py` to confirm the result.
+
+> **Note:** This is a one-way operation per run. To restore the original keywords, the rules must be recreated from scratch.
+
 ---
 
 ## Files
@@ -63,6 +81,7 @@ python3 validate_logs.py --since now-10m   # look back further if needed
 | `sds_custom_rules.json` | Rule definitions (8 rules) |
 | `send_logs.py` | Step 3: send 6 test logs to Datadog |
 | `validate_logs.py` | Step 4: validate SDS masking results |
+| `clear_rule_keywords.py` | (Optional) clear keyword match conditions from all rules in a group |
 
 ---
 
