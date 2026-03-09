@@ -2,37 +2,73 @@
 
 Datadog Sensitive Data Scanner (SDS) configuration for testing custom scanning rules, focusing on Japanese PII and payment card data.
 
-## Scanning Groups
+## How to Use This Repo
 
-### `tis-sds-test`
+### Prerequisites
 
-| Property | Value |
-|---|---|
-| **Group ID** | `a46d92d5-4d4f-4085-a2c8-34e03ae56609` |
-| **Status** | Enabled |
-| **Log Filter** | `service:sds-test` |
-| **Products** | Logs |
+```bash
+export DD_API_KEY="your_api_key"
+export DD_APPLICATION_KEY="your_application_key"
+```
 
-Contains 6 custom rules (see below).
+### Step 1 — Create a scanning group
+
+```bash
+python3 create_sds_group.py --name "my-group"
+```
+
+Creates a new SDS scanning group with the filter `service:sds-test`.
+The output will print the `group_id` needed for the next step.
+
+### Step 2 — Add scanning rules
+
+```bash
+python3 create_custom_rules.py --group-id <group-id>
+```
+
+Reads `sds_custom_rules.json` and adds all 8 rules to the group.
+Edit `sds_custom_rules.json` to add, remove, or modify rules before running.
+
+### Step 3 — Send test logs
+
+```bash
+python3 send_logs.py
+```
+
+Sends 6 pre-defined test log entries to Datadog (`service=sds-test`) covering Japanese PII and payment card scenarios.
+
+### Step 4 — Validate results
+
+```bash
+python3 validate_logs.py
+```
+
+Fetches the latest logs from Datadog, deduplicates by `request_id`, and checks that:
+- All sensitive data has been replaced by mask tokens
+- No raw PII (names, phone numbers, addresses, card numbers, CVV, email) remains
+
+Options:
+```bash
+python3 validate_logs.py --since now-10m   # look back further if needed
+```
 
 ---
 
-### `sds-test` (reference)
+## Files
 
-| Property | Value |
+| File | Description |
 |---|---|
-| **Group ID** | `a17b57ad-ad65-4a27-9cd7-5a1734fa30db` |
-| **Status** | Enabled |
-| **Log Filter** | `service:sds-test` |
-| **Products** | Logs |
-
-Contains the 6 custom rules below + 77 standard library rules for international PII and payment cards.
+| `create_sds_group.py` | Step 1: create a Datadog SDS scanning group |
+| `create_custom_rules.py` | Step 2: add rules from `sds_custom_rules.json` to a group |
+| `sds_custom_rules.json` | Rule definitions (8 rules) |
+| `send_logs.py` | Step 3: send 6 test logs to Datadog |
+| `validate_logs.py` | Step 4: validate SDS masking results |
 
 ---
 
-## Custom Rules
+## Scanning Rules
 
-These 6 rules are defined in [`sds_custom_rules.json`](./sds_custom_rules.json) and applied in both `tis-sds-test` and `sds-test` groups.
+All 8 rules are defined in `sds_custom_rules.json`.
 
 ### 1. JP Phone Number Scanner
 
@@ -58,7 +94,7 @@ Matches Japanese phone numbers using both ASCII hyphen (`-`) and full-width hyph
 
 Matches Japanese postal codes (e.g., `123-4567`).
 
-> **Note:** The pattern `\d{3}-\d{4}` can also match phone number fragments like `045-000-0000`. Use keyword filtering on fields like `zip` or `postal_code` to improve precision.
+> **Note:** The pattern can also match phone number fragments like `045-000-0000`. Use keyword filtering on fields like `zip` or `postal_code` to improve precision.
 
 ---
 
@@ -84,7 +120,7 @@ Triggers on a Japanese prefecture name (e.g., `東京都`, `大阪府`) and capt
 | **Replacement** | `[jp_kanji]` |
 | **Pattern** | `[\x{4E00}-\x{9FFF}]{1,4}\s?[\x{4E00}-\x{9FFF}]{1,4}` |
 
-Matches 1–4 CJK Unified Ideograph characters, an optional space, followed by another 1–4 CJK characters. This covers typical Japanese family-name + given-name patterns in kanji.
+Matches 1–4 CJK Unified Ideograph characters, an optional space, followed by another 1–4 CJK characters. Covers typical Japanese family-name + given-name patterns in kanji.
 
 > **Note:** This also matches kanji addresses (e.g., `京都府京都市下京区`). Use keyword filtering on name fields for more precise targeting.
 
@@ -116,7 +152,20 @@ Matches any 13–19 digit number as a PAN (Primary Account Number) candidate. Co
 
 ---
 
-### 7. CVV/CVC Scanner
+### 7. Standard Email Address Scanner
+
+| Field | Value |
+|---|---|
+| **Priority** | 1 |
+| **Tag** | `sensitive_data:email_address` |
+| **Replacement** | `[email_address]` |
+| **Type** | Standard library rule (`PuXiVTCkTHOtj0Yad1ppsw`) |
+
+Uses the Datadog built-in email address pattern.
+
+---
+
+### 8. CVV/CVC Scanner
 
 | Field | Value |
 |---|---|
@@ -127,24 +176,4 @@ Matches any 13–19 digit number as a PAN (Primary Account Number) candidate. Co
 | **Keywords** | `cvv`, `cvc`, `cvv2`, `csc`, `securityCode`, `security_code`, `card_verification` |
 | **Keyword window** | 30 characters |
 
-Matches 3–4 digit numbers that appear within 30 characters of a card verification keyword. The keyword guard prevents false positives on unrelated short numbers (e.g., order quantities, port numbers).
-
----
-
-## Files
-
-| File | Description |
-|---|---|
-| `sds_custom_rules.json` | Exportable JSON of all 6 custom rules with full attributes for reuse via the Datadog SDS API |
-
-## Re-applying Rules via API
-
-To recreate these rules in a new scanning group, use the Datadog SDS API:
-
-```
-POST https://api.datadoghq.com/api/v2/sensitive-data-scanner/config/rules
-```
-
-Each rule in `sds_custom_rules.json` maps directly to the request body `data.attributes`. Set `data.relationships.group.data.id` to the target group ID and `meta.version` to the current configuration version.
-
-See the [Datadog SDS API reference](https://docs.datadoghq.com/api/latest/sensitive-data-scanner/) for full documentation.
+Matches 3–4 digit numbers that appear within 30 characters of a card verification keyword. The keyword guard prevents false positives on unrelated short numbers.
