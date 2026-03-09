@@ -1,0 +1,150 @@
+{
+  "description": "Custom SDS rules exported from scanning group 'sds-test' (a17b57ad-ad65-4a27-9cd7-5a1734fa30db)",
+  "exported_at": "2026-03-09",
+  "rules": [
+    {
+      "name": "JP Phone Number Scanner",
+      "description": "",
+      "pattern": "0\\d{1,4}[-\uff0d]\\d{1,4}[-\uff0d]\\d{4}",
+      "priority": 2,
+      "is_enabled": true,
+      "tags": ["sensitive_data:custom"],
+      "text_replacement": {
+        "type": "replacement_string",
+        "replacement_string": "[jp_phone_number]"
+      },
+      "namespaces": [],
+      "excluded_namespaces": [],
+      "included_keyword_configuration": {
+        "keywords": [],
+        "character_count": 30
+      }
+    },
+    {
+      "name": "JP Postal Code Scanner",
+      "description": "045-000-0000のような番号もひっかかってしまう。\nzipやpostal_codeなどキーワードで絞り込みが可能であれば、正確に絞り込み可能。",
+      "pattern": "\\b\\d{3}-\\d{4}\\b",
+      "priority": 5,
+      "is_enabled": true,
+      "tags": ["sensitive_data:custom"],
+      "text_replacement": {
+        "type": "replacement_string",
+        "replacement_string": "[jp_postal_code]"
+      },
+      "namespaces": [],
+      "excluded_namespaces": [],
+      "included_keyword_configuration": {
+        "keywords": [],
+        "character_count": 30
+      }
+    },
+    {
+      "name": "JP Address Scanner",
+      "description": "都道府県名をトリガーにSON の `\"` までを一気にマッチさせる記載\n力技。。。",
+      "pattern": "(北海道|青森県|岩手県|宮城県|秋田県|山形県|福島県|茨城県|栃木県|群馬県|埼玉県|千葉県|東京都|神奈川県|新潟県|富山県|石川県|福井県|山梨県|長野県|岐阜県|静岡県|愛知県|三重県|滋賀県|京都府|大阪府|兵庫県|奈良県|和歌山県|鳥取県|島根県|岡山県|広島県|山口県|徳島県|香川県|愛媛県|高知県|福岡県|佐賀県|長崎県|熊本県|大分県|宮崎県|鹿児島県|沖縄県)[^\"]*",
+      "priority": 5,
+      "is_enabled": true,
+      "tags": ["sensitive_data:jp_address_scanner"],
+      "text_replacement": {
+        "type": "replacement_string",
+        "replacement_string": "[jp_address]"
+      },
+      "namespaces": [],
+      "excluded_namespaces": [],
+      "included_keyword_configuration": {
+        "keywords": [],
+        "character_count": 30
+      }
+    },
+    {
+      "name": "JP Name (Kanji) Scanner",
+      "description": "漢字表記を全てスキャン。\nkeywordの指定ができれば全てマスク可能。\n\n京都府京都市下京区烏丸通七条下\nなど住所も対象となる。",
+      "pattern": "[\\x{4E00}-\\x{9FFF}]{1,4}\\s?[\\x{4E00}-\\x{9FFF}]{1,4}",
+      "priority": 5,
+      "is_enabled": true,
+      "tags": ["sensitive_data:jp_name_kanji_scanner"],
+      "text_replacement": {
+        "type": "replacement_string",
+        "replacement_string": "[jp_kanji]"
+      },
+      "namespaces": [],
+      "excluded_namespaces": [],
+      "included_keyword_configuration": {
+        "keywords": [],
+        "character_count": 30
+      }
+    },
+    {
+      "name": "JP Name (Kana) Scanner",
+      "description": "ひらがなとカタカナ マッチ",
+      "pattern": "[\u3041-\u309f\u30a1-\u30ff\u30fc]{2,}",
+      "priority": 5,
+      "is_enabled": true,
+      "tags": ["sensitive_data:jp_name_kana_scanner"],
+      "text_replacement": {
+        "type": "replacement_string",
+        "replacement_string": "[jp_hiragana_kana]"
+      },
+      "namespaces": [],
+      "excluded_namespaces": [],
+      "included_keyword_configuration": {
+        "keywords": [],
+        "character_count": 30
+      }
+    },
+    {
+      "name": "Credit Card PAN Scanner (whole)",
+      "description": "13〜19桁の連続数字を PAN 候補として扱う",
+      "pattern": "\\b\\d{13,19}\\b",
+      "priority": 5,
+      "is_enabled": true,
+      "tags": ["sensitive_data:credit_card_pan_scanner_whole"],
+      "text_replacement": {
+        "type": "replacement_string",
+        "replacement_string": "[card_number]"
+      },
+      "namespaces": [],
+      "excluded_namespaces": [],
+      "included_keyword_configuration": {
+        "keywords": [],
+        "character_count": 30
+      }
+    },
+    {
+      "name": "Standard Email Address Scanner",
+      "description": "",
+      "standard_pattern_id": "PuXiVTCkTHOtj0Yad1ppsw",
+      "priority": 1,
+      "is_enabled": true,
+      "tags": ["sensitive_data:email_address", "sensitive_data_category:email_address"],
+      "text_replacement": {
+        "type": "replacement_string",
+        "replacement_string": "[email_address]"
+      },
+      "namespaces": [],
+      "excluded_namespaces": [],
+      "included_keyword_configuration": {
+        "keywords": [],
+        "character_count": 30
+      }
+    },
+    {
+      "name": "CVV/CVC Scanner",
+      "description": "Masks 3–4 digit CVV/CVC/security codes when found near card verification keywords",
+      "pattern": "\\b\\d{3,4}\\b",
+      "priority": 1,
+      "is_enabled": true,
+      "tags": ["sensitive_data:cvv"],
+      "text_replacement": {
+        "type": "replacement_string",
+        "replacement_string": "[cvv]"
+      },
+      "namespaces": [],
+      "excluded_namespaces": [],
+      "included_keyword_configuration": {
+        "keywords": ["cvv", "cvc", "cvv2", "csc", "securityCode", "security_code", "card_verification"],
+        "character_count": 30
+      }
+    }
+  ]
+}
